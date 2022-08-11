@@ -8,6 +8,7 @@ Every request requires you authenticate. In order to do this, you will need your
 authentication token from EdStem. You can access your token by looking at network requests
 on EdStem and finding a request with an x-token header.
 """
+import json
 from typing import Any, Dict, List
 
 import requests
@@ -69,12 +70,18 @@ class EdStemAPI:
         response.raise_for_status()
         return response.json()
 
-    def _ed_post_request(self, url: str, query_params: Dict[str, Any] = {}) -> bytes:
+    def _ed_post_request(
+        self, 
+        url: str, 
+        query_params: Dict[str, Any] = {},
+        json: Dict[str, Any] = {}
+    ) -> bytes:
         """Sends a POST request to EdStem.
 
         Args:
             url: URL endpoint to hit
             query_params: A dictionary of query parameters and values
+            json: A dictionary of parameters and values to pass as the payload
 
         Returns:
             A binary string containing response content
@@ -83,7 +90,32 @@ class EdStemAPI:
             HTTPError: If there was an error with the HTTP request
         """
         response = requests.post(
-            url, params=query_params, headers={"Authorization": "Bearer " + self._token}
+            url, params=query_params, json=json, headers={"Authorization": "Bearer " + self._token}
+        )
+        response.raise_for_status()
+        return response.content
+
+    def _ed_put_request(
+        self, 
+        url: str, 
+        query_params: Dict[str, Any] = {},
+        json: Dict[str, Any] = {}
+    ) -> bytes:
+        """Sends a PUT request to EdStem.
+
+        Args:
+            url: URL endpoint to hit
+            query_params: A dictionary of query parameters and values
+            json: A dictionary of parameters and values to pass as the payload
+
+        Returns:
+            A binary string containing response content
+
+        Raises:
+            HTTPError: If there was an error with the HTTP request
+        """
+        response = requests.put(
+            url, params=query_params, json=json, headers={"Authorization": "Bearer " + self._token}
         )
         response.raise_for_status()
         return response.content
@@ -105,6 +137,17 @@ class EdStemAPI:
         lessons = self._ed_get_request(lessons_path)
         return lessons["lessons"]
 
+    # Get module info
+    def get_all_modules(self) -> List[Dict[str, Any]]:
+        """Gets all modules for a course. Endpoint: /courses/{course_id}/lessons
+
+        Returns:
+            A list of JSON objects, one for each module.
+        """
+        lessons_path = urljoin(EdStemAPI.API_URL, f"courses/{self._course_id}/lessons")
+        lessons = self._ed_get_request(lessons_path)
+        return lessons["modules"]        
+
     def get_lesson(self, lesson_id: int) -> Dict[str, Any]:
         """Gets metadata for a single lesson. Endpoint: /lessons/{lesson_id}
 
@@ -117,6 +160,52 @@ class EdStemAPI:
         lesson_path = urljoin(EdStemAPI.API_URL, "lessons", lesson_id)
         lesson = self._ed_get_request(lesson_path)["lesson"]
         return lesson
+
+    def create_lesson(
+        self, 
+        title : str = None,
+        options : Dict[str, Any] = {}
+        ) -> Dict[str, Any]:
+        """Creates a new Ed lesson. Endpoint: /courses/{course_id}/lessons
+
+        Args:
+            title: Title for the new lesson
+            options: Dictionary of options to set on the lesson
+
+        Returns:
+            A JSON object with the new lesson's metadata
+        """
+        lessons_path = urljoin(EdStemAPI.API_URL, f"courses/{self._course_id}/lessons")
+        lesson_dict = {
+            "lesson": ({
+                "title" : title
+            } | options)
+        }
+        lesson = json.loads(self._ed_post_request(lessons_path, json=lesson_dict))["lesson"]
+        return lesson
+
+    def edit_lesson(
+        self, 
+        lesson_id : int,
+        options : Dict[str, Any] = {}
+        ) -> Dict[str, Any]:
+        """Modifies an existing Ed lesson. Endpoint: /lessons/{lesson_id}
+
+        Args:
+            lesson_id: Identifier for lesson
+            options: Dictionary of options to set on the lesson
+
+        Returns:
+            A JSON object with the updated lesson's metadata
+        """
+        lesson = self.get_lesson(lesson_id)
+        lesson_path = urljoin(EdStemAPI.API_URL, f"lessons/{lesson_id}")
+        lesson_dict = {
+            "lesson": lesson | options
+        }
+        lesson = json.loads(self._ed_put_request(lesson_path, json=lesson_dict))["lesson"]
+        return lesson
+
 
     def get_questions(self, slide_id: int) -> List[Dict[str, Any]]:
         """Gets metadata for a single Quiz slide's questions. Endpoint: /lessons/slides/{slide_id}/questions
