@@ -64,7 +64,7 @@ class EdStemAPI:
             HTTPError: If there was an error with the HTTP request
         """
         response = requests.get(
-            url, params=query_params, headers={"x-token": self._token}
+            url, params=query_params, headers={"Authorization": "Bearer " + self._token}
         )
         response.raise_for_status()
         return response.json()
@@ -82,7 +82,9 @@ class EdStemAPI:
         Raises:
             HTTPError: If there was an error with the HTTP request
         """
-        response = requests.post(url, params=query_params, data={"_token": self._token})
+        response = requests.post(
+            url, params=query_params, headers={"Authorization": "Bearer " + self._token}
+        )
         response.raise_for_status()
         return response.content
 
