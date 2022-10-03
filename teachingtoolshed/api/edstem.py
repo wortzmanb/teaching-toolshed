@@ -206,6 +206,52 @@ class EdStemAPI:
         lesson = json.loads(self._ed_put_request(lesson_path, json=lesson_dict))["lesson"]
         return lesson
 
+    # def edit_slide(
+    #     self, 
+    #     slide_id : int,
+    #     options : Dict[str, Any] = {}
+    #     ) -> Dict[str, Any]:
+    #     """Modifies an existing Ed slide. Endpoint: /lessons/slides/{slide_id}
+
+    #     Args:
+    #         slide_id: Identifier for slide
+    #         options: Dictionary of options to set on the slide
+
+    #     Returns:
+    #         A JSON object with the updated slide's metadata
+    #     """
+    #     lesson = self.get_lesson(lesson_id)
+    #     lesson_path = urljoin(EdStemAPI.API_URL, f"lessons/{lesson_id}")
+    #     lesson_dict = {
+    #         "lesson": lesson | options
+    #     }
+    #     lesson = json.loads(self._ed_put_request(lesson_path, json=lesson_dict))["lesson"]
+    #     return lesson        
+
+    def clone_slide(
+        self,
+        slide_id: int,
+        lesson_id: int,
+        is_hidden: bool = False,
+        ) -> Dict[str, Any]:
+        """Clones an existing Ed slide into a new lesson. Endpoint: /lessons/slides/{slide_id}/clone
+
+        Args:
+            slide_id: Identifier for slide to clone
+            lesson_id: Identifier for lesson to clone into
+
+        Returns:
+            A JSON object with the cloned slide's metadata
+        """
+
+        clone_path = urljoin(EdStemAPI.API_URL, f"lessons/slides/{slide_id}/clone")
+        payload = {
+            "lesson_id": lesson_id,
+            "is_hidden": is_hidden
+        }
+        slide = json.loads(self._ed_post_request(clone_path, json=payload))["slide"]
+        return slide
+
 
     def get_questions(self, slide_id: int) -> List[Dict[str, Any]]:
         """Gets metadata for a single Quiz slide's questions. Endpoint: /lessons/slides/{slide_id}/questions
