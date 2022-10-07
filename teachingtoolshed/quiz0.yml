@@ -1,0 +1,23 @@
+- title: "Quiz 0"     # [REQUIRED] quiz title
+  course_id: 20568    # [REQUIRED] id of Ed course where quizzes will live
+  master_id: 40957    # [REQUIRED] id of Ed lesson that contains master quiz
+  module_id: 10077    # id of Ed module where quizzes should be created
+  date: 2022-10-07    # date to release quiz
+  duration: 30        # time in minutes quiz should be open
+  num_versions: 3     # number of quiz versions to create
+  versions:
+    - suffix: AA
+      open: 11:30am   # time to open quiz; requires either date above or a date included
+      close:          # time to close quiz; requires either date above or a date included
+      section_regex: AA
+    - suffix: AB
+      open: 
+      close:
+    - suffix: AC
+      open: 12:30pm
+      close: 1:25pm
+  problems:           # pairs indicating a problem tag and how many problems to choose from that tag
+      "Q1": 3         #     if not enough problems exist, will choose all
+      "Q2": 2
+      "Q3": 1
+  

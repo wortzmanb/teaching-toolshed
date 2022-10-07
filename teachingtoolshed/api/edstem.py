@@ -12,6 +12,7 @@ import json
 from typing import Any, Dict, List
 
 import requests
+import itertools
 
 # Special type to indicate only a 0 or 1 should be passed
 BinaryFlag = int
@@ -161,6 +162,19 @@ class EdStemAPI:
         lesson = self._ed_get_request(lesson_path)["lesson"]
         return lesson
 
+    def get_slide(self, slide_id: int) -> Dict[str, Any]:
+        """Gets metadata for a single slide. Endpoint: /lessons/slides/{slide_id}
+
+        Args:
+            slide_id: Identifier for slide
+
+        Returns:
+            A JSON object with the specified slide's metadata
+        """
+        slide_path = urljoin(EdStemAPI.API_URL, "lessons", "slides", slide_id)
+        slide = self._ed_get_request(slide_path)["slide"]
+        return slide        
+
     def create_lesson(
         self, 
         title : str = None,
@@ -206,28 +220,6 @@ class EdStemAPI:
         lesson = json.loads(self._ed_put_request(lesson_path, json=lesson_dict))["lesson"]
         return lesson
 
-    # def edit_slide(
-    #     self, 
-    #     slide_id : int,
-    #     options : Dict[str, Any] = {}
-    #     ) -> Dict[str, Any]:
-    #     """Modifies an existing Ed slide. Endpoint: /lessons/slides/{slide_id}
-
-    #     Args:
-    #         slide_id: Identifier for slide
-    #         options: Dictionary of options to set on the slide
-
-    #     Returns:
-    #         A JSON object with the updated slide's metadata
-    #     """
-    #     lesson = self.get_lesson(lesson_id)
-    #     lesson_path = urljoin(EdStemAPI.API_URL, f"lessons/{lesson_id}")
-    #     lesson_dict = {
-    #         "lesson": lesson | options
-    #     }
-    #     lesson = json.loads(self._ed_put_request(lesson_path, json=lesson_dict))["lesson"]
-    #     return lesson        
-
     def clone_slide(
         self,
         slide_id: int,
@@ -251,6 +243,29 @@ class EdStemAPI:
         }
         slide = json.loads(self._ed_post_request(clone_path, json=payload))["slide"]
         return slide
+
+    # def edit_slide(
+    #     self, 
+    #     slide_id : int,
+    #     options : Dict[str, Any] = {}
+    #     ) -> Dict[str, Any]:
+    #     """Modifies an existing Ed slide. Endpoint: /lessons/slides/{slide_id}
+
+    #     Args:
+    #         slide_id: Identifier for slide
+    #         options: Dictionary of options to set on the slide
+
+    #     Returns:
+    #         A JSON object with the updated slide's metadata
+    #     """
+    #     slide = self.get_slide(slide_id)
+    #     slide_path = urljoin(EdStemAPI.API_URL, f"lessons/slides/{slide_id}")
+    #     slide_dict = {
+    #         "slide": slide | options
+    #     }
+    #     print(slide_dict)
+    #     slide = json.loads(self._ed_put_request(slide_path, json=slide_dict))["slide"]
+    #     return slide                
 
 
     def get_questions(self, slide_id: int) -> List[Dict[str, Any]]:
@@ -415,6 +430,20 @@ class EdStemAPI:
 
         result = self._ed_get_request(users_path)["users"]
         return result
+
+    def get_all_users(self):
+        users = self._ed_get_request(urljoin(EdStemAPI.API_URL, "courses", self._course_id, "users"))['users']
+        return users
+
+    def get_all_tutorials(self):
+        users = self.get_all_users()
+        groups = itertools.groupby(sorted(users, key=lambda x: x['tutorial'] if x['tutorial'] else ""), 
+                                   key=lambda x: x['tutorial'])
+
+        tutorials = []
+        for k,_ in groups:
+            tutorials.append(k)
+        return tutorials
 
     def get_all_submissions(
         self,
